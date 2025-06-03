@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Arch Linux LXDE Installation Guide</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: A wizard-style, single-page application is used. The 7 installation phases are presented in a fixed sidebar for easy navigation, acting as a stepper. The main content area displays the steps for the currently selected phase. This structure is ideal for procedural guides as it provides a clear overview of the process while allowing the user to focus on one set of tasks at a time, preventing information overload and making the complex installation feel manageable. Interactive "copy to clipboard" buttons for code blocks provide direct utility and reduce user error. -->
+    <!-- Visualization & Content Choices: The source document is a procedural guide with no quantitative data, so traditional charts are not applicable. The primary "visualization" is the information architecture itself—the interactive stepper. Report Info -> Goal -> Viz/Presentation Method -> Interaction -> Justification -> Library/Method. (Installation Steps -> Guide User -> Stepper UI with content cards -> Click phase to show steps, Click button to copy code -> Simplifies complex process, provides utility -> Vanilla JS & Tailwind CSS). -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fdfdfc;
+            color: #333;
+        }
+        .phase-nav-item.active {
+            background-color: #e0e7ff;
+            color: #3730a3;
+            font-weight: 600;
+        }
+        .code-block {
+            background-color: #282c34;
+            color: #abb2bf;
+            position: relative;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background-color: #4a5568;
+            color: #e2e8f0;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .copy-btn:hover {
+            background-color: #2d3748;
+        }
+        .callout {
+            background-color: #fef9c3;
+            border-left: 4px solid #facc15;
+            color: #713f12;
+        }
+        .info-callout {
+            background-color: #eef2ff;
+            border-left: 4px solid #6366f1;
+            color: #3730a3;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="flex flex-col md:flex-row min-h-screen">
+        <!-- Sidebar Navigation -->
+        <aside class="w-full md:w-72 bg-gray-50 border-b md:border-r border-gray-200">
+            <div class="p-4">
+                <h1 class="text-xl font-bold text-gray-800">Installation Phases</h1>
+                <p class="text-sm text-gray-500 mt-1">Arch Linux + LXDE on VirtualBox</p>
+            </div>
+            <nav id="phase-nav" class="flex flex-row overflow-x-auto md:flex-col p-2 space-x-1 md:space-x-0 md:space-y-1">
+                <a href="#preliminary-setup" data-phase="0" class="phase-nav-item flex-shrink-0 w-full text-left p-3 rounded-md text-sm transition-colors duration-200 hover:bg-gray-200">0. Preliminary Setup</a>
+                <a href="#phase-1" data-phase="1" class="phase-nav-item flex-shrink-0 w-full text-left p-3 rounded-md text-sm transition-colors duration-200 hover:bg-gray-200">1. VM Setup & Boot</a>
+                <a href="#phase-2" data-phase="2" class="phase-nav-item flex-shrink-0 w-full text-left p-3 rounded-md text-sm transition-colors duration-200 hover:bg-gray-200">2. Partitioning</a>
+                <a href="#phase-3" data-phase="3" class="phase-nav-item flex-shrink-0 w-full text-left p-3 rounded-md text-sm transition-colors duration-200 hover:bg-gray-200">3. Base Install</a>
+                <a href="#phase-4" data-phase="4" class="phase-nav-item flex-shrink-0 w-full text-left p-3 rounded-md text-sm transition-colors duration-200 hover:bg-gray-200">4. System Config</a>
+                <a href="#phase-5" data-phase="5" class="phase-nav-item flex-shrink-0 w-full text-left p-3 rounded-md text-sm transition-colors duration-200 hover:bg-gray-200">5. Bootloader</a>
+                <a href="#phase-6" data-phase="6" class="phase-nav-item flex-shrink-0 w-full text-left p-3 rounded-md text-sm transition-colors duration-200 hover:bg-gray-200">6. DE & VBox</a>
+                <a href="#phase-7" data-phase="7" class="phase-nav-item flex-shrink-0 w-full text-left p-3 rounded-md text-sm transition-colors duration-200 hover:bg-gray-200">7. Final Steps</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-4 md:p-8 overflow-y-auto">
+            <div id="phase-content">
+                <!-- Preliminary Setup -->
+                <div id="phase-0-content" class="phase-content-panel space-y-6">
+                    <h2 class="text-3xl font-bold text-gray-900 border-b pb-2">0. Preliminary Setup: Oracle VirtualBox</h2>
+                    <p class="text-gray-600">Before embarking on the Arch Linux installation, you need a virtual machine environment. Oracle VirtualBox is a popular, free, and open-source virtualization software that allows you to run multiple operating systems on a single physical machine. It creates a "virtual computer" where you can install and test various OSes without affecting your main system.</p>
+
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-100">
+                        <h3 class="font-semibold text-lg">Step 0.1: What is Oracle VirtualBox?</h3>
+                        <p class="mt-1 text-gray-600">VirtualBox is a powerful x86 and AMD64/Intel64 virtualization product for enterprise as well as home use. It allows you to create virtual machines (VMs) that simulate a complete computer system, including hardware components like CPU, RAM, hard disk, and network adapters. This means you can install operating systems like Arch Linux inside a VM, isolating them from your host operating system (e.g., Windows, macOS, another Linux distribution).</p>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-100">
+                        <h3 class="font-semibold text-lg">Step 0.2: Download and Install VirtualBox</h3>
+                        <p class="mt-1 text-gray-600">To get started, you need to download and install VirtualBox on your host operating system. The process is generally straightforward, similar to installing any other application on your system.</p>
+                        <ul class="list-disc list-inside mt-2 text-sm text-gray-600 space-y-1">
+                            <li>Go to the official VirtualBox download page: <a href="https://www.virtualbox.org/wiki/Downloads" target="_blank" class="text-indigo-600 hover:underline">https://www.virtualbox.org/wiki/Downloads</a>.</li>
+                            <li>Download the appropriate installer for your host operating system (e.g., Windows hosts, macOS hosts, Linux distributions).</li>
+                            <li>Follow the on-screen instructions of the installer. For most operating systems, this involves running the downloaded file and clicking "Next" through the prompts.</li>
+                            <li>It is also highly recommended to download and install the **VirtualBox Extension Pack** from the same download page. This pack provides additional functionalities like USB 2.0/3.0 support, VirtualBox RDP, disk encryption, and NVMe.</li>
+                        </ul>
+                        <p class="mt-2 text-gray-600">Once installed, you can launch the VirtualBox Manager application, which is where you will create and manage your virtual machines.</p>
+                    </div>
+                </div>
+
+                <!-- Phase 1 Content -->
+                <div id="phase-1-content" class="phase-content-panel space-y-6 hidden">
+                    <h2 class="text-3xl font-bold text-gray-900 border-b pb-2">Phase 1: Virtual Machine Setup and Boot</h2>
+                    <p class="text-gray-600">This initial phase involves preparing the virtual environment within Oracle VirtualBox and booting into the Arch Linux installer. Correctly configuring the VM and verifying its boot mode are essential first steps for a smooth installation process.</p>
+                    
+                    <div class="info-callout p-4 rounded-md">
+                        <h4 class="font-bold">Important: Set Boot Mode First</h4>
+                        <p class="mt-1">Before starting, decide if you want to use UEFI or BIOS mode. To enable UEFI, you must shut down the VM, go to Settings → System → Motherboard, and check "Enable EFI". This choice determines your partitioning scheme and bootloader commands in later phases.</p>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-100">
+                        <h3 class="font-semibold text-lg">Step 1.1: Download Arch Linux ISO</h3>
+                        <p class="mt-1 text-gray-600">To obtain the latest official Arch Linux installation image, navigate to the official Arch Linux download page: <a href="https://archlinux.org/download/" target="_blank" class="text-indigo-600 hover:underline">https://archlinux.org/download/</a>. On this page, you will find a list of official mirror servers. Select a mirror geographically close to you for the fastest download speeds. Locate and download the file ending with the `.iso` extension (e.g., `archlinux-YYYY.MM.DD-x86_64.iso`).</p>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-100">
+                        <h3 class="font-semibold text-lg">Step 1.2: Create & Configure VM</h3>
+                        <p class="mt-1 text-gray-600">In VirtualBox, create a new "Arch Linux (64-bit)" VM with at least 2GB RAM and a 20GB+ VDI hard disk. In the VM settings, allocate 2+ CPU cores, max out video memory (128MB) and enable 3D acceleration. In Storage, attach the downloaded Arch ISO to the virtual CD/DVD drive. Start the VM to boot into the installer.</p>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-100">
+                        <h3 class="font-semibold text-lg">Step 1.3: Set Keyboard Layout for Live Environment (Temporary)</h3>
+                        <p class="mt-1 text-gray-600">To avoid frustration, set your keyboard layout for the installer session now. This is a temporary setting for the live environment only.</p>
+                        <div class="code-block mt-3 p-4 rounded-md overflow-x-auto"><button class="copy-btn">Copy</button><pre><code># Find your keymap, e.g., for German: localectl list-keymaps | grep de
+loadkeys de-latin1</code></pre></div>
+                        <p class="mt-2 text-sm text-gray-600"><span class="font-semibold">`localectl list-keymaps | grep de`</span>: This command lists all available keyboard layouts that contain "de" (for German) in their name, helping you choose the correct one. <span class="font-semibold">`loadkeys de-latin1`</span>: This command applies the `de-latin1` keyboard layout to the current console session, making it active immediately.</p>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-100">
+                        <h3 class="font-semibold text-lg">Step 1.4: Verify Boot Mode (CRITICAL STEP)</h3>
+                        <p class="mt-1 text-gray-600">This command confirms how your system booted. The output (or lack thereof) will determine which partitioning and bootloader instructions to follow.</p>
+                        <div class="code-block mt-3 p-4 rounded-md overflow-x-auto"><button class="copy-btn">Copy</button><pre><code>ls /sys/firmware/efi/efivars</code></pre></div>
+                        <p class="mt-2 text-sm text-gray-600"><span class="font-semibold">`ls /sys/firmware/efi/efivars`</span>: This command checks for the presence of EFI variables. If files are listed, the system is in UEFI mode; if an error occurs, it's in BIOS (Legacy) mode.</p>
+                        <ul class="list-disc list-inside mt-2 text-sm text-gray-600">
+                            <li><span class="font-semibold">Output shown:</span> You are in UEFI mode.</li>
+                            <li><span class="font-semibold">Error / No output:</span> You are in BIOS (Legacy) mode.</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-100">
+                        <h3 class="font-semibold text-lg">Step 1.5: Connect to Internet & Update Clock</h3>
+                        <p class="mt-1 text-gray-600">Verify your internet connection (usually automatic with NAT), then synchronize the system clock to ensure package integrity.</p>
+                        <div class="code-block mt-3 p-4 rounded-md overflow-x-auto"><button class="copy-btn">Copy</button><pre><code>ping archlinux.org
+timedatectl set-ntp true</code></pre></div>
+                        <p class="mt-2 text-sm text-gray-600"><span class="font-semibold">`ping archlinux.org`</span>: This command tests network connectivity by sending packets to the Arch Linux website. <span class="font-semibold">`timedatectl set-ntp true`</span>: This command enables Network Time Protocol (NTP) to automatically synchronize the system clock with a time server, ensuring accurate time and date.</p>
+                    </div>
+                </div>
+
+                <!-- Phase 2 Content -->
+                <div id="phase-2-content" class="phase-content-panel space-y-6 hidden">
+                    <h2 class="text-3xl font-bold text-gray-900 border-b pb-2">Phase 2: Partitioning and Formatting</h2>
+                    
+                    <div class="info-callout p-4 rounded-md">
+                        <h4 class="font-bold">Understanding Disk Partitioning</h4>
+                        <p class="mt-1">This phase divides your virtual hard drive into logical sections. The specific partitions you need depend on your boot mode. Pay close attention to the tool and commands for your detected boot mode.</p>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-100">
+                        <h3 class="font-semibold text-lg">Step 2.1: Identify Your Disk</h3>
+                        <p class="mt-1 text-gray-600">Your main virtual hard drive will almost certainly be `/dev/sda`.</p>
+                        <div class="code-block mt-3 p-4 rounded-md overflow-x-auto"><button class="copy-btn">Copy</button><pre><code>lsblk</code></pre></div>
+                        <p class="mt-2 text-sm text-gray-600"><span class="font-semibold">`lsblk`</span>: This command lists all block devices (storage devices like hard drives) and their partitions, allowing you to identify your target disk (e.g., `/dev/sda`).</p>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-100">
+                        <h3 class="font-semibold text-lg">Step 2.2: Partition the Disk</h3>
+                        <p class="mt-1 text-gray-600">Choose the scenario that matches the boot mode you verified in Phase 1.</p>
+                        
+                        <div class="mt-4">
+                            <h4 class="font-medium text-gray-800">Scenario A: UEFI System (GPT)</h4>
+                            <p class="mt-1 text-sm text-gray-600">Use `gdisk` to create a GPT partition table. You will need an EFI System Partition (ESP).</p>
+                            <div class="code-block mt-2 p-4 rounded-md overflow-x-auto"><button class="copy-btn">Copy</button><pre><code>gdisk /dev/sda</code></pre></div>
+                            <p class="mt-2 text-sm text-gray-600"><span class="font-semibold">`gdisk /dev/sda`</span>: This command starts the `gdisk` partitioning tool for the specified disk. Inside `gdisk`:</p>
+                            <ul class="list-disc list-inside mt-2 text-sm text-gray-600 space-y-1">
+                                <li><span class="font-semibold">`o`</span>: Creates a new empty GPT (GUID Partition Table). Confirm with `y`.</li>
+                                <li><span class="font-semibold">`n`</span>: Creates a new partition.</li>
+                                <li><span class="font-semibold">`+512M`</span>: Specifies the size of the partition (512 Megabytes).</li>
+                                <li><span class="font-semibold">`ef00`</span>: Sets the partition type code for an EFI System Partition.</li>
+                                <li><span class="font-semibold">`8200`</span>: Sets the partition type code for Linux swap.</li>
+                                <li><span class="font-semibold">`8300`</span>: Sets the partition type code for a standard Linux filesystem (e.g., ext4).</li>
+                                <li><span class="font-semibold">`w`</span>: Writes the changes to the disk. Confirm with `y`.</li>
+                            </ul>
+                        </div>
+
+                        <div class="mt-6">
+                            <h4 class="font-medium text-gray-800">Scenario B: BIOS/Legacy System (MBR)</h4>
+                            <p class="mt-1 text-sm text-gray-600">Use `fdisk` to create an MBR partition table. No EFI partition is needed.</p>
+                            <div class="code-block mt-2 p-4 rounded-md overflow-x-auto"><button class="copy-btn">Copy</button><pre><code>fdisk /dev/sda</code></pre></div>
+                            <p class="mt-2 text-sm text-gray-600"><span class="font-semibold">`fdisk /dev/sda`</span>: This command starts the `fdisk` partitioning tool for the specified disk. Inside `fdisk`:</p>
+                            <ul class="list-disc list-inside mt-2 text-sm text-gray-600 space-y-1">
+                                <li><span class="font-semibold">`o`</span>: Creates a new empty DOS (MBR) partition table.</li>
+                                <li><span class="font-semibold">`n`</span>: Creates a new partition.</li>
+                                <li><span class="font-semibold">`p`</span>: Specifies a primary partition.</li>
+                                <li><span class="font-semibold">`+8G`</span>: Specifies the size of the partition (8 Gigabytes).</li>
+                                <li><span class="font-semibold">`t`</span>: Changes a partition's type.</li>
+                                <li><span class="font-semibold">`82`</span>: Sets the partition type code for Linux swap.</li>
+                                <li><span class="font-semibold">`w`</span>: Writes the changes to the disk.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-100">
+                        <h3 class="font-semibold text-lg">Step 2.3: Format and Mount Partitions</h3>
+                        <p class="mt-1 text-gray-600">Format each partition, then mount them. Replace `X`, `Y`, and `Z` with your actual partition numbers (`lsblk` to check).</p>
+                        <div class="code-block mt-3 p-4 rounded-md overflow-x-auto"><button class="copy-btn">Copy</button><pre><code># Format Root (e.g., /dev/sda3 for UEFI, /dev/sda2 for BIOS)
+mkfs.ext4 /dev/sdaX
+
+# Format EFI (UEFI ONLY, e.g., /dev/sda1)
+mkfs.fat -F 32 /dev/sdaY
+
+# Setup Swap (e.g., /dev/sda2 for UEFI, /dev/sda1 for BIOS)
+mkswap /dev/sdaZ
+swapon /dev/sdaZ
+
+# Mount Root
+mount /dev/sdaX /mnt
+
+# Mount EFI (UEFI ONLY)
+mkdir -p /mnt/boot/efi
+mount /dev/sdaY /mnt/boot/efi</code></pre></div>
+                        <p class="mt-2 text-sm text-gray-600"><span class="font-semibold">`mkfs.ext4 /dev/sdaX`</span>: Formats the specified partition (`/dev/sdaX`) with the `ext4` filesystem, typically used for the root directory. <span class="font-semibold">`mkfs.fat -F 32 /dev/sdaY`</span>: Formats the specified partition (`/dev/sdaY`) with `FAT32`, which is required for the EFI System Partition (used only in UEFI mode). <span class="font-semibold">`mkswap /dev/sdaZ`</span>: Initializes the specified partition (`/dev/sdaZ`) as swap space. <span class="font-semibold">`swapon /dev/sdaZ`</span>: Activates the newly created swap space, making it available for use as virtual memory. <span class="font-semibold">`mount /dev/sdaX /mnt`</span>: Mounts the root partition (`/dev/sdaX`) to the `/mnt` directory, making it the temporary root for the installation process. <span class="font-semibold">`mkdir -p /mnt/boot/efi`</span>: Creates the `/boot/efi` directory inside the new root filesystem if it doesn't already exist. <span class="font-semibold">`mount /dev/sdaY /mnt/boot/efi`</span>: Mounts the EFI partition (`/dev/sdaY`) to the `/mnt/boot/efi` directory (used only in UEFI mode).</p>
+                    </div>
+                </div>
+                
+                <!-- Phase 3 Content -->
+                <div id="phase-3-content" class="phase-content-panel space-y-6 hidden">
+                     <h2 class="text-3xl font-bold text-gray-900 border-b pb-2">Phase 3: Base System Installation</h2>
+                    <p class="text-gray-600">With the disk prepared, you will now install the essential packages that form the core of the Arch Linux operating system onto your new root partition. This includes the Linux kernel, firmware, and your chosen text editor.</p>
+                    
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-100">
+                        <h3 class="font-semibold text-lg">Step 3.1: Install Essential Packages</h3>
+                        <p class="mt-1 text-gray-600">Use the `pacstrap` script to install the base system, the Linux kernel, firmware, and the `vim` text editor.</p>
+                        <div class="code-block mt-3 p-4 rounded-md overflow-x-auto"><button class="copy-btn">Copy</button><pre><code>pacstrap /mnt base linux linux-firmware vim</code></pre></div>
+                        <p class="mt-2 text-sm text-gray-600"><span class="font-semibold">`pacstrap /mnt base linux linux-firmware vim`</span>: This command installs the specified packages (`base` system, `linux` kernel, `linux-firmware` for hardware support, and `vim` text editor) onto the mounted root partition (`/mnt`).</p>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-100">
+                        <h3 class="font-semibold text-lg">Step 3.2: Generate fstab</h3>
+                        <p class="mt-1 text-gray-600">Create the File System Table (`fstab`) file, which defines how disk partitions are mounted into the filesystem automatically on boot.</p>
+                        <div class="code-block mt-3 p-4 rounded-md overflow-x-auto"><button class="copy-btn">Copy</button><pre><code>genfstab -U /mnt >> /mnt/etc/fstab</code></pre></div>
+                        <p class="mt-2 text-sm text-gray-600"><span class="font-semibold">`genfstab -U /mnt >> /mnt/etc/fstab`</span>: This command generates an `fstab` file based on the currently mounted filesystems under `/mnt`, using UUIDs (`-U`) for persistent identification, and redirects (`>>`) its output to the `fstab` file in the new system.</p>
+                        <p class="mt-2 text-sm text-gray-500">It's a good idea to verify the contents: `cat /mnt/etc/fstab`.</p>
+                    </div>
+                </div>
+
+                <!-- Phase 4 Content -->
+                <div id="phase-4-content" class="phase-content-panel space-y-6 hidden">
+                    <h2 class="text-3xl font-bold text-gray-900 border-b pb-2">Phase 4: System Configuration</h2>
+                    <p class="text-gray-600">Now, you'll `chroot` into your new system to perform essential configuration. This includes setting the timezone, language (locale), keyboard layout, hostname, and creating user accounts.</p>
+
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-100">
+                        <h3 class="font-semibold text-lg">Step 4.1: Chroot</h3>
+                        <p class="mt-1 text-gray-600">Change root into your new system to perform administrative tasks as if you've booted into it directly.</p>
+                        <div class="code-block mt-3 p-4 rounded-md overflow-x-auto"><button class="copy-btn">Copy</button><pre><code>arch-chroot /mnt</code></pre></div>
+                        <p class="mt-2 text-sm text-gray-600"><span class="font-semibold">`arch-chroot /mnt`</span>: This command changes the root directory to `/mnt`, allowing you to execute commands directly within your newly installed Arch Linux system.</p>
+                    </div>
+                    
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-100">
+                        <h3 class="font-semibold text-lg">Step 4.2: Time, Localization & System-Wide Keyboard Layout</h3>
+                        <p class="mt-1 text-gray-600">Set your timezone, generate locales, set the system language, and configure the **persistent, system-wide default keyboard layout**.</p>
+                        <div class="code-block mt-3 p-4 rounded-md overflow-x-auto"><button class="copy-btn">Copy</button><pre><code>ln -sf /usr/share/zoneinfo/Europe/Berlin /etc/localtime
+hwclock --systohc
+
+# Edit locale.gen to uncomment en_US.UTF-8 and other desired locales
+vim /etc/locale.gen
+locale-gen
+
+echo "LANG=en_US.UTF-8" > /etc/locale.conf
+localectl set-keymap de-latin1</code></pre></div>
+                        <p class="mt-2 text-sm text-gray-600"><span class="font-semibold">`ln -sf /usr/share/zoneinfo/Europe/Berlin /etc/localtime`</span>: Creates a symbolic link to set the system's timezone to Berlin. <span class="font-semibold">`hwclock --systohc`</span>: Writes the system time from the kernel to the hardware clock (RTC). <span class="font-semibold">`vim /etc/locale.gen`</span>: Opens the `locale.gen` file in Vim for editing, where you uncomment desired locales. <span class="font-semibold">`locale-gen`</span>: Generates the locales specified in `locale.gen`. <span class="font-semibold">`echo "LANG=en_US.UTF-8" > /etc/locale.conf`</span>: Sets the default system language environment variable. <span class="font-semibold">`localectl set-keymap de-latin1`</span>: Sets the system-wide keyboard layout to `de-latin1`, affecting both console (TTY) and graphical (Xorg) environments persistently.</p>
+                        <p class="mt-2 text-sm text-gray-500">The `localectl set-keymap` command ensures this layout is used consistently in both console (TTY) and graphical environments (Xorg) after reboot.</p>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-100">
+                        <h3 class="font-semibold text-lg">Step 4.3: Network & Root Password</h3>
+                        <p class="mt-1 text-gray-600">Set a hostname for your VM, configure the hosts file, and create a secure password for the root user.</p>
+                        <div class="code-block mt-3 p-4 rounded-md overflow-x-auto"><button class="copy-btn">Copy</button><pre><code>echo "myarchvm" > /etc/hostname
+echo -e "127.0.0.1\tlocalhost\n::1\t\tlocalhost\n127.0.1.1\tmyarchvm.localdomain\tmyarchvm" >> /etc/hosts
+passwd</code></pre></div>
+                        <p class="mt-2 text-sm text-gray-600"><span class="font-semibold">`echo "myarchvm" > /etc/hostname`</span>: Sets the hostname for your new Arch Linux system. <span class="font-semibold">`echo -e "127.0.0.1\tlocalhost\n::1\t\tlocalhost\n127.0.1.1\tmyarchvm.localdomain\tmyarchvm" >> /etc/hosts`</span>: Appends entries to the `/etc/hosts` file, mapping hostnames to IP addresses for local name resolution. <span class="font-semibold">`passwd`</span>: Prompts you to set a password for the root user.</p>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-100">
+                        <h3 class="font-semibold text-lg">Step 4.4: Create User & Configure Sudo</h3>
+                        <p class="mt-1 text-gray-600">Create a standard user for daily use, install the `sudo` package, and then use `visudo` to grant your new user administrative privileges.</p>
+                        <div class="code-block mt-3 p-4 rounded-md overflow-x-auto"><button class="copy-btn">Copy</button><pre><code>useradd -m -g users -G wheel,storage,power -s /bin/bash yourusername
+passwd yourusername
+
+pacman -S sudo
+
+EDITOR=vim visudo</code></pre></div>
+                        <p class="mt-2 text-sm text-gray-600"><span class="font-semibold">`useradd -m -g users -G wheel,storage,power -s /bin/bash yourusername`</span>: Creates a new user with a home directory (`-m`), adds them to the `users`, `wheel`, `storage`, and `power` groups, and sets `/bin/bash` as their default shell. <span class="font-semibold">`passwd yourusername`</span>: Prompts you to set a password for the new user. <span class="font-semibold">`pacman -S sudo`</span>: Installs the `sudo` package, which provides the `sudo` command and `visudo`. <span class="font-semibold">`EDITOR=vim visudo`</span>: Opens the sudoers file for editing using Vim, allowing you to grant specific users or groups `sudo` privileges securely.</p>
+                        <p class="mt-2 text-sm text-gray-500">In the `visudo` command, uncomment the line `%wheel ALL=(ALL:ALL) ALL`.</p>
+                        <div class="info-callout p-4 mt-4 rounded-md">
+                            <p><strong>Note on vboxsf:</strong> The `vboxsf` group for shared folders is not available yet. After completing Phase 6, you can add your user to it with `sudo usermod -aG vboxsf yourusername`.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Phase 5 Content -->
+                <div id="phase-5-content" class="phase-content-panel space-y-6 hidden">
+                    <h2 class="text-3xl font-bold text-gray-900 border-b pb-2">Phase 5: Bootloader Installation</h2>
+                    <p class="text-gray-600">A bootloader (GRUB) is required to load the operating system when the VM starts. This phase installs and configures GRUB. You must use the command that matches the boot mode you verified in Phase 1.</p>
+                    
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-100">
+                        <h3 class="font-semibold text-lg">Step 5.1: Install GRUB Packages</h3>
+                        <div class="code-block mt-3 p-4 rounded-md overflow-x-auto"><button class="copy-btn">Copy</button><pre><code>pacman -S grub efibootmgr os-prober</code></pre></div>
+                        <p class="mt-2 text-sm text-gray-600"><span class="font-semibold">`pacman -S grub efibootmgr os-prober`</span>: Installs the `grub` bootloader, `efibootmgr` (a utility for managing UEFI boot entries), and `os-prober` (a utility that detects other operating systems, useful if you were dual-booting).</p>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-100">
+                        <h3 class="font-semibold text-lg">Step 5.2: Install GRUB to Disk</h3>
+                        <p class="mt-1 text-gray-600">Run the command corresponding to your boot mode.</p>
+                        <p class="mt-2 font-medium text-gray-700">For UEFI Systems:</p>
+                        <div class="code-block mt-2 p-4 rounded-md overflow-x-auto"><button class="copy-btn">Copy</button><pre><code>grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ArchLinux --recheck</code></pre></div>
+                        <p class="mt-2 text-sm text-gray-600"><span class="font-semibold">`grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ArchLinux --recheck`</span>: Installs GRUB for UEFI systems, specifying the target architecture (`x86_64-efi`), the EFI system partition's mount point (`/boot/efi`), a unique bootloader ID (`ArchLinux`), and `--recheck` to re-scan devices.</p>
+                        <p class="mt-3 font-medium text-gray-700">For BIOS Systems:</p>
+                        <div class="code-block mt-2 p-4 rounded-md overflow-x-auto"><button class="copy-btn">Copy</button><pre><code>grub-install --target=i386-pc /dev/sda</code></pre></div>
+                        <p class="mt-2 text-sm text-gray-600"><span class="font-semibold">`grub-install --target=i386-pc /dev/sda`</span>: Installs GRUB for BIOS systems to the Master Boot Record (MBR) of the specified disk (`/dev/sda`).</p>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-100">
+                        <h3 class="font-semibold text-lg">Step 5.3: Generate GRUB Configuration</h3>
+                        <p class="mt-1 text-gray-600">Generate the main GRUB configuration file. This step is mandatory.</p>
+                        <div class="code-block mt-3 p-4 rounded-md overflow-x-auto"><button class="copy-btn">Copy</button><pre><code>grub-mkconfig -o /boot/grub/grub.cfg</code></pre></div>
+                        <p class="mt-2 text-sm text-gray-600"><span class="font-semibold">`grub-mkconfig -o /boot/grub/grub.cfg`</span>: Generates the `grub.cfg` file, which contains the boot menu entries and tells GRUB how to boot your Arch Linux system (and any other detected OSes).</p>
+                        <div class="callout p-4 mt-4 rounded-md">
+                            <p><strong>Warning:</strong> Neglecting this step often leads to a system that simply refuses to boot. A rather inconvenient oversight, wouldn't you agree?</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Phase 6 Content -->
+                <div id="phase-6-content" class="phase-content-panel space-y-6 hidden">
+                    <h2 class="text-3xl font-bold text-gray-900 border-b pb-2">Phase 6: Desktop Environment & Guest Additions</h2>
+                    <p class="text-gray-600">Install the graphical components: the Xorg display server, the LXDE desktop environment, a display manager (LightDM), the Network Manager, and the crucial VirtualBox Guest Additions for better integration.</p>
+
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-100">
+                        <h3 class="font-semibold text-lg">Step 6.1: Install Graphical Packages</h3>
+                        <p class="mt-1 text-gray-600">This command installs Xorg, the LXDE desktop, and the LightDM login manager.</p>
+                        <div class="code-block mt-3 p-4 rounded-md overflow-x-auto"><button class="copy-btn">Copy</button><pre><code>pacman -S xorg lightdm lightdm-gtk-greeter lxde</code></pre></div>
+                        <p class="mt-2 text-sm text-gray-600"><span class="font-semibold">`pacman -S xorg lightdm lightdm-gtk-greeter lxde`</span>: Installs `xorg` (the X Window System, foundation for graphical environments), `lightdm` (a lightweight display manager for logging in), `lightdm-gtk-greeter` (the graphical login screen for LightDM), and `lxde` (the LXDE desktop environment packages).</p>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-100">
+                        <h3 class="font-semibold text-lg">Step 6.2: Install Network Manager & VBox Utilities</h3>
+                        <p class="mt-1 text-gray-600">Install NetworkManager for easy network configuration in the DE, and the VirtualBox Guest Utilities for features like shared clipboard and auto-resizing.</p>
+                        <div class="code-block mt-3 p-4 rounded-md overflow-x-auto"><button class="copy-btn">Copy</button><pre><code>pacman -S networkmanager network-manager-applet virtualbox-guest-utils</code></pre></div>
+                        <p class="mt-2 text-sm text-gray-600"><span class="font-semibold">`pacman -S networkmanager network-manager-applet virtualbox-guest-utils`</span>: Installs `networkmanager` (for managing network connections), `network-manager-applet` (a graphical applet for NetworkManager), and `virtualbox-guest-utils` (the VirtualBox Guest Additions utilities for enhanced VM features like display resizing, shared folders, and clipboard).</p>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-100">
+                        <h3 class="font-semibold text-lg">Step 6.3: Enable System Services & Configure Clipboard</h3>
+                        <p class="mt-1 text-gray-600">Enable the services for the display manager, network manager, and VirtualBox guest utilities so they start automatically on boot. Also, enable bidirectional clipboard for seamless host-guest interaction.</p>
+                        <div class="code-block mt-3 p-4 rounded-md overflow-x-auto"><button class="copy-btn">Copy</button><pre><code>systemctl enable lightdm
+systemctl enable NetworkManager
+systemctl enable vboxservice</code></pre></div>
+                        <p class="mt-2 text-sm text-gray-600"><span class="font-semibold">`systemctl enable lightdm`</span>: Enables the LightDM display manager service to start at boot, providing a graphical login screen. <span class="font-semibold">`systemctl enable NetworkManager`</span>: Enables the NetworkManager service to manage network connections. <span class="font-semibold">`systemctl enable vboxservice`</span>: Enables the VirtualBox guest service to run at boot, providing integration features with the host.</p>
+                        <div class="info-callout p-4 mt-4 rounded-md">
+                            <h4 class="font-bold">Enable Bidirectional Clipboard in VirtualBox:</h4>
+                            <p class="mt-1">After the VM reboots and you're in the graphical environment, go to the VirtualBox menu at the top of your VM window:</p>
+                            <ul class="list-disc list-inside mt-2 text-sm text-gray-600">
+                                <li>Click on **"Devices"**</li>
+                                <li>Go to **"Shared Clipboard"**</li>
+                                <li>Select **"Bidirectional"**</li>
+                            </ul>
+                            <p class="mt-2 text-sm text-gray-600">This will allow you to copy and paste text between your host machine and the Arch Linux VM.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Phase 7 Content -->
+                <div id="phase-7-content" class="phase-content-panel space-y-6 hidden">
+                    <h2 class="text-3xl font-bold text-gray-900 border-b pb-2">Phase 7: Final Steps</h2>
+                    <p class="text-gray-600">The installation is nearly complete. The final steps are to exit the chroot environment, unmount the partitions, remove the installation media from the VM, and reboot into your new, fully functional Arch Linux system.</p>
+
+                     <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-100">
+                        <h3 class="font-semibold text-lg">Step 7.1: Exit, Unmount, and Reboot</h3>
+                        <p class="mt-1 text-gray-600">Exit the chroot environment, unmount all partitions cleanly, and reboot the machine.</p>
+                        <div class="code-block mt-3 p-4 rounded-md overflow-x-auto"><button class="copy-btn">Copy</button><pre><code>exit
+umount -R /mnt
+reboot</code></pre></div>
+                        <p class="mt-2 text-sm text-gray-600"><span class="font-semibold">`exit`</span>: Exits the `arch-chroot` environment, returning you to the live Arch ISO session. <span class="font-semibold">`umount -R /mnt`</span>: Recursively unmounts all filesystems that were mounted under `/mnt`. <span class="font-semibold">`reboot`</span>: Reboots the virtual machine.</p>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-100">
+                        <h3 class="font-semibold text-lg">Step 7.2: Remove Installation Media</h3>
+                        <p class="mt-1 text-gray-600">While the VM is rebooting, make sure to remove the Arch Linux ISO from the virtual CD/DVD drive in the VirtualBox settings. This is critical to prevent booting back into the installer.</p>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-100">
+                        <h3 class="font-semibold text-lg">Post-Installation</h3>
+                        <p class="mt-1 text-gray-600">If all went well, you'll be greeted by the LightDM login screen. Log in with the username and password you created in Phase 4. Congratulations!</p>
+                        <div class="info-callout p-4 mt-4 rounded-md">
+                            <h4 class="font-bold">Entering Terminal Mode from Login Screen:</h4>
+                            <p class="mt-1">Should you ever need to access a pure terminal (TTY) from the graphical login screen, simply press:</p>
+                            <p class="font-semibold mt-2">`Ctrl + Alt + F2` (or F3, F4, etc.)</p>
+                            <p class="mt-1 text-sm text-gray-600">To return to the graphical login screen, usually press `Ctrl + Alt + F1` (or F7, depending on your setup).</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const navItems = document.querySelectorAll('.phase-nav-item');
+            const contentPanels = document.querySelectorAll('.phase-content-panel');
+            const copyButtons = document.querySelectorAll('.copy-btn');
+
+            function showPhase(phaseNumber) {
+                navItems.forEach(item => {
+                    if (item.dataset.phase === phaseNumber) {
+                        item.classList.add('active');
+                    } else {
+                        item.classList.remove('active');
+                    }
+                });
+
+                contentPanels.forEach(panel => {
+                    // Corrected: Check if panel.id matches the expected format 'phase-X-content'
+                    if (panel.id === `phase-${phaseNumber}-content`) {
+                        panel.classList.remove('hidden');
+                    } else {
+                        panel.classList.add('hidden');
+                    }
+                });
+            }
+
+            navItems.forEach(item => {
+                item.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const phase = this.dataset.phase;
+                    showPhase(phase);
+                    window.location.hash = `phase-${phase}`;
+                    window.scrollTo(0, 0);
+                });
+            });
+            
+            copyButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const codeBlock = this.nextElementSibling;
+                    const code = codeBlock.innerText;
+
+                    const textarea = document.createElement('textarea');
+                    textarea.value = code;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+
+                    const originalText = this.innerText;
+                    this.innerText = 'Copied!';
+                    setTimeout(() => {
+                        this.innerText = originalText;
+                    }, 2000);
+                });
+            });
+
+            // Initial state from URL hash or default to phase 0 or 1
+            const initialPhase = window.location.hash.replace('#phase-', '') || '0'; // Default to Preliminary Setup
+            showPhase(initialPhase);
+        });
+    </script>
+</body>
+</html>
